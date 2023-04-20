@@ -367,6 +367,17 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
                         $cut += \count($children);
                     }
                     $cursor->skipChildren = false;
+
+                    // Add uninitialized properties
+                    foreach ($item->attr["uninitialized"] as $uninitializedProperty) {
+                        $propName = array_key_first($uninitializedProperty);
+                        $propType = $uninitializedProperty[$propName];
+                        $string = "$propName: ⚠ uninitialized($propType)";
+                        $cursor->depth++;
+                        $dumper->dumpString($cursor, $string, false, 0);
+                    }
+
+
                     $dumper->leaveHash($cursor, $item->type, $item->class, $withChildren, $cut);
                     break;
 

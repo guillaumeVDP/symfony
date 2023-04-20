@@ -128,6 +128,16 @@ class VarCloner extends AbstractCloner
                             $stub->value = $v;
                             $stub->handle = $h;
                             $a = $this->castObject($stub, 0 < $i);
+                            if ($stub->value !== '') {
+                                $uninitializedProps = array_diff_key(get_class_vars($stub->value::class), $a);
+                                $stubClass = $stub->value::class;
+                                $stub->attr['uninitialized'] = [];
+                                foreach ($uninitializedProps as $key => $value) {
+                                    $rp = new \ReflectionProperty($stubClass, $key);
+                                    $stub->attr['uninitialized'][] = [$key => $rp->getType()->getName()];
+                                }
+                            }
+
                             if ($v !== $stub->value) {
                                 if (Stub::TYPE_OBJECT !== $stub->type || null === $stub->value) {
                                     break;
@@ -237,7 +247,6 @@ class VarCloner extends AbstractCloner
         foreach ($values as $h => $v) {
             $hardRefs[$h] = $v;
         }
-
         return $queue;
     }
 }

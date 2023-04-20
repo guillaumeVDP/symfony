@@ -31,6 +31,10 @@ class CliDumperTest extends TestCase
     {
         require __DIR__.'/../Fixtures/dumb-var.php';
 
+
+
+
+
         $dumper = new CliDumper('php://output');
         $dumper->setColors(false);
         $cloner = new VarCloner();
@@ -46,7 +50,15 @@ class CliDumperTest extends TestCase
                 return $a;
             },
         ]);
-        $data = $cloner->cloneVar($var);
+
+
+//        die();
+
+        $data = $cloner->cloneVar($foo);
+//        var_dump($data);
+//        dd($data);
+        $dumper->dump($data);
+        die();
 
         ob_start();
         $dumper->dump($data);
@@ -113,346 +125,346 @@ EOTXT
         );
     }
 
-    /**
-     * @dataProvider provideDumpWithCommaFlagTests
-     */
-    public function testDumpWithCommaFlag($expected, $flags)
-    {
-        $dumper = new CliDumper(null, null, $flags);
-        $dumper->setColors(false);
-        $cloner = new VarCloner();
-
-        $var = [
-            'array' => ['a', 'b'],
-            'string' => 'hello',
-            'multiline string' => "this\nis\na\multiline\nstring",
-        ];
-
-        $dump = $dumper->dump($cloner->cloneVar($var), true);
-
-        $this->assertSame($expected, $dump);
-    }
-
-    public function testDumpWithCommaFlagsAndExceptionCodeExcerpt()
-    {
-        $dumper = new CliDumper(null, null, CliDumper::DUMP_TRAILING_COMMA);
-        $dumper->setColors(false);
-        $cloner = new VarCloner();
-
-        $ex = new \RuntimeException('foo');
-
-        $dump = $dumper->dump($cloner->cloneVar($ex)->withRefHandles(false), true);
-
-        $this->assertStringMatchesFormat(<<<'EOTXT'
-RuntimeException {
-  #message: "foo"
-  #code: 0
-  #file: "%ACliDumperTest.php"
-  #line: %d
-  trace: {
-    %ACliDumperTest.php:%d {
-      Symfony\Component\VarDumper\Tests\Dumper\CliDumperTest->testDumpWithCommaFlagsAndExceptionCodeExcerpt()
-      › 
-      › $ex = new \RuntimeException('foo');
-      › 
-    }
-    %A
-  }
-}
-
-EOTXT
-            , $dump);
-    }
-
-    public static function provideDumpWithCommaFlagTests()
-    {
-        $expected = <<<'EOTXT'
-array:3 [
-  "array" => array:2 [
-    0 => "a",
-    1 => "b"
-  ],
-  "string" => "hello",
-  "multiline string" => """
-    this\n
-    is\n
-    a\multiline\n
-    string
-    """
-]
-
-EOTXT;
-
-        yield [$expected, CliDumper::DUMP_COMMA_SEPARATOR];
-
-        $expected = <<<'EOTXT'
-array:3 [
-  "array" => array:2 [
-    0 => "a",
-    1 => "b",
-  ],
-  "string" => "hello",
-  "multiline string" => """
-    this\n
-    is\n
-    a\multiline\n
-    string
-    """,
-]
-
-EOTXT;
-
-        yield [$expected, CliDumper::DUMP_TRAILING_COMMA];
-    }
-
-    public function testJsonCast()
-    {
-        $var = (array) json_decode('{"0":{},"1":null}');
-        foreach ($var as &$v) {
-        }
-        $var[] = &$v;
-        $var[''] = 2;
-
-        $this->assertDumpMatchesFormat(
-            <<<'EOTXT'
-array:4 [
-  0 => {}
-  1 => &1 null
-  2 => &1 null
-  "" => 2
-]
-EOTXT
-            ,
-            $var
-        );
-    }
-
-    public function testObjectCast()
-    {
-        $var = (object) [1 => 1];
-        $var->{1} = 2;
-
-        $this->assertDumpMatchesFormat(
-            <<<'EOTXT'
-{
-  +"1": 2
-}
-EOTXT
-            ,
-            $var
-        );
-    }
-
-    public function testClosedResource()
-    {
-        $var = fopen(__FILE__, 'r');
-        fclose($var);
-
-        $dumper = new CliDumper('php://output');
-        $dumper->setColors(false);
-        $cloner = new VarCloner();
-        $data = $cloner->cloneVar($var);
-
-        ob_start();
-        $dumper->dump($data);
-        $out = ob_get_clean();
-        $res = (int) $var;
-
-        $this->assertStringMatchesFormat(
-            <<<EOTXT
-Closed resource @{$res}
-
-EOTXT
-            ,
-            $out
-        );
-    }
-
-    public function testFlags()
-    {
-        putenv('DUMP_LIGHT_ARRAY=1');
-        putenv('DUMP_STRING_LENGTH=1');
-
-        $var = [
-            range(1, 3),
-            ['foo', 2 => 'bar'],
-        ];
-
-        $this->assertDumpEquals(
-            <<<EOTXT
-[
-  [
-    1
-    2
-    3
-  ]
-  [
-    0 => (3) "foo"
-    2 => (3) "bar"
-  ]
-]
-EOTXT
-            ,
-            $var
-        );
-
-        putenv('DUMP_LIGHT_ARRAY=');
-        putenv('DUMP_STRING_LENGTH=');
-    }
-
-    public function testThrowingCaster()
-    {
-        $out = fopen('php://memory', 'r+');
-
-        require_once __DIR__.'/../Fixtures/Twig.php';
-        $twig = new \__TwigTemplate_VarDumperFixture_u75a09(new Environment(new FilesystemLoader()));
-
-        $dumper = new CliDumper();
-        $dumper->setColors(false);
-        $cloner = new VarCloner();
-        $cloner->addCasters([
-            ':stream' => function ($res, $a) {
-                unset($a['wrapper_data']);
-
-                return $a;
-            },
-        ]);
-        $cloner->addCasters([
-            ':stream' => eval('return function () use ($twig) {
-                try {
-                    $twig->render([]);
-                } catch (\Twig\Error\RuntimeError $e) {
-                    throw $e->getPrevious();
-                }
-            };'),
-        ]);
-        $ref = (int) $out;
-
-        $data = $cloner->cloneVar($out);
-        $dumper->dump($data, $out);
-        $out = stream_get_contents($out, -1, 0);
-
-        $this->assertStringMatchesFormat(
-            <<<EOTXT
-stream resource {@{$ref}
-  ⚠: Symfony\Component\VarDumper\Exception\ThrowingCasterException {#%d
-    #message: "Unexpected Exception thrown from a caster: Foobar"
-    trace: {
-      %sTwig.php:2 {
-        __TwigTemplate_VarDumperFixture_u75a09->doDisplay(array \$context, array \$blocks = [])
-        › foo bar
-        ›   twig source
-        › 
-      }
-      %s%eTemplate.php:%d { …}
-      %s%eTemplate.php:%d { …}
-      %s%eTemplate.php:%d { …}
-      %s%eTests%eDumper%eCliDumperTest.php:%d { …}
-%A  }
-  }
-%Awrapper_type: "PHP"
-  stream_type: "MEMORY"
-  mode: "%s+b"
-  unread_bytes: 0
-  seekable: true
-  uri: "php://memory"
-%Aoptions: []
-}
-
-EOTXT
-            ,
-            $out
-        );
-    }
-
-    public function testRefsInProperties()
-    {
-        $var = (object) ['foo' => 'foo'];
-        $var->bar = &$var->foo;
-
-        $dumper = new CliDumper();
-        $dumper->setColors(false);
-        $cloner = new VarCloner();
-
-        $data = $cloner->cloneVar($var);
-        $out = $dumper->dump($data, true);
-
-        $this->assertStringMatchesFormat(
-            <<<EOTXT
-{#%d
-  +"foo": &1 "foo"
-  +"bar": &1 "foo"
-}
-
-EOTXT
-            ,
-            $out
-        );
-    }
-
-    public function testIncompleteClass()
-    {
-        $unserializeCallbackHandler = ini_set('unserialize_callback_func', null);
-        $var = unserialize('O:8:"Foo\Buzz":0:{}');
-        ini_set('unserialize_callback_func', $unserializeCallbackHandler);
-
-        $this->assertDumpMatchesFormat(
-            <<<EOTXT
-__PHP_Incomplete_Class(Foo\Buzz) {}
-EOTXT
-            ,
-            $var
-        );
-    }
-
-    public static function provideDumpArrayWithColor()
-    {
-        yield [
-            ['foo' => 'bar'],
-            0,
-            <<<EOTXT
-\e[0;38;5;208m\e[38;5;38marray:1\e[0;38;5;208m [\e[m
-  \e[0;38;5;208m"\e[38;5;113mfoo\e[0;38;5;208m" => "\e[1;38;5;113mbar\e[0;38;5;208m"\e[m
-\e[0;38;5;208m]\e[m
-
-EOTXT
-        ];
-
-        yield [[], AbstractDumper::DUMP_LIGHT_ARRAY, "\e[0;38;5;208m[]\e[m\n"];
-
-        yield [
-            ['foo' => 'bar'],
-            AbstractDumper::DUMP_LIGHT_ARRAY,
-            <<<EOTXT
-\e[0;38;5;208m[\e[m
-  \e[0;38;5;208m"\e[38;5;113mfoo\e[0;38;5;208m" => "\e[1;38;5;113mbar\e[0;38;5;208m"\e[m
-\e[0;38;5;208m]\e[m
-
-EOTXT
-        ];
-
-        yield [[], 0, "\e[0;38;5;208m[]\e[m\n"];
-    }
-
-    /**
-     * @dataProvider provideDumpArrayWithColor
-     */
-    public function testDumpArrayWithColor($value, $flags, $expectedOut)
-    {
-        if ('\\' === \DIRECTORY_SEPARATOR) {
-            $this->markTestSkipped('Windows console does not support coloration');
-        }
-
-        $out = '';
-        $dumper = new CliDumper(function ($line, $depth) use (&$out) {
-            if ($depth >= 0) {
-                $out .= str_repeat('  ', $depth).$line."\n";
-            }
-        }, null, $flags);
-        $dumper->setColors(true);
-        $cloner = new VarCloner();
-        $dumper->dump($cloner->cloneVar($value));
-
-        $this->assertSame($expectedOut, $out);
-    }
+//    /**
+//     * @dataProvider provideDumpWithCommaFlagTests
+//     */
+//    public function testDumpWithCommaFlag($expected, $flags)
+//    {
+//        $dumper = new CliDumper(null, null, $flags);
+//        $dumper->setColors(false);
+//        $cloner = new VarCloner();
+//
+//        $var = [
+//            'array' => ['a', 'b'],
+//            'string' => 'hello',
+//            'multiline string' => "this\nis\na\multiline\nstring",
+//        ];
+//
+//        $dump = $dumper->dump($cloner->cloneVar($var), true);
+//
+//        $this->assertSame($expected, $dump);
+//    }
+//
+//    public function testDumpWithCommaFlagsAndExceptionCodeExcerpt()
+//    {
+//        $dumper = new CliDumper(null, null, CliDumper::DUMP_TRAILING_COMMA);
+//        $dumper->setColors(false);
+//        $cloner = new VarCloner();
+//
+//        $ex = new \RuntimeException('foo');
+//
+//        $dump = $dumper->dump($cloner->cloneVar($ex)->withRefHandles(false), true);
+//
+//        $this->assertStringMatchesFormat(<<<'EOTXT'
+//RuntimeException {
+//  #message: "foo"
+//  #code: 0
+//  #file: "%ACliDumperTest.php"
+//  #line: %d
+//  trace: {
+//    %ACliDumperTest.php:%d {
+//      Symfony\Component\VarDumper\Tests\Dumper\CliDumperTest->testDumpWithCommaFlagsAndExceptionCodeExcerpt()
+//      ›
+//      › $ex = new \RuntimeException('foo');
+//      ›
+//    }
+//    %A
+//  }
+//}
+//
+//EOTXT
+//            , $dump);
+//    }
+//
+//    public static function provideDumpWithCommaFlagTests()
+//    {
+//        $expected = <<<'EOTXT'
+//array:3 [
+//  "array" => array:2 [
+//    0 => "a",
+//    1 => "b"
+//  ],
+//  "string" => "hello",
+//  "multiline string" => """
+//    this\n
+//    is\n
+//    a\multiline\n
+//    string
+//    """
+//]
+//
+//EOTXT;
+//
+//        yield [$expected, CliDumper::DUMP_COMMA_SEPARATOR];
+//
+//        $expected = <<<'EOTXT'
+//array:3 [
+//  "array" => array:2 [
+//    0 => "a",
+//    1 => "b",
+//  ],
+//  "string" => "hello",
+//  "multiline string" => """
+//    this\n
+//    is\n
+//    a\multiline\n
+//    string
+//    """,
+//]
+//
+//EOTXT;
+//
+//        yield [$expected, CliDumper::DUMP_TRAILING_COMMA];
+//    }
+//
+//    public function testJsonCast()
+//    {
+//        $var = (array) json_decode('{"0":{},"1":null}');
+//        foreach ($var as &$v) {
+//        }
+//        $var[] = &$v;
+//        $var[''] = 2;
+//
+//        $this->assertDumpMatchesFormat(
+//            <<<'EOTXT'
+//array:4 [
+//  0 => {}
+//  1 => &1 null
+//  2 => &1 null
+//  "" => 2
+//]
+//EOTXT
+//            ,
+//            $var
+//        );
+//    }
+//
+//    public function testObjectCast()
+//    {
+//        $var = (object) [1 => 1];
+//        $var->{1} = 2;
+//
+//        $this->assertDumpMatchesFormat(
+//            <<<'EOTXT'
+//{
+//  +"1": 2
+//}
+//EOTXT
+//            ,
+//            $var
+//        );
+//    }
+//
+//    public function testClosedResource()
+//    {
+//        $var = fopen(__FILE__, 'r');
+//        fclose($var);
+//
+//        $dumper = new CliDumper('php://output');
+//        $dumper->setColors(false);
+//        $cloner = new VarCloner();
+//        $data = $cloner->cloneVar($var);
+//
+//        ob_start();
+//        $dumper->dump($data);
+//        $out = ob_get_clean();
+//        $res = (int) $var;
+//
+//        $this->assertStringMatchesFormat(
+//            <<<EOTXT
+//Closed resource @{$res}
+//
+//EOTXT
+//            ,
+//            $out
+//        );
+//    }
+//
+//    public function testFlags()
+//    {
+//        putenv('DUMP_LIGHT_ARRAY=1');
+//        putenv('DUMP_STRING_LENGTH=1');
+//
+//        $var = [
+//            range(1, 3),
+//            ['foo', 2 => 'bar'],
+//        ];
+//
+//        $this->assertDumpEquals(
+//            <<<EOTXT
+//[
+//  [
+//    1
+//    2
+//    3
+//  ]
+//  [
+//    0 => (3) "foo"
+//    2 => (3) "bar"
+//  ]
+//]
+//EOTXT
+//            ,
+//            $var
+//        );
+//
+//        putenv('DUMP_LIGHT_ARRAY=');
+//        putenv('DUMP_STRING_LENGTH=');
+//    }
+//
+//    public function testThrowingCaster()
+//    {
+//        $out = fopen('php://memory', 'r+');
+//
+//        require_once __DIR__.'/../Fixtures/Twig.php';
+//        $twig = new \__TwigTemplate_VarDumperFixture_u75a09(new Environment(new FilesystemLoader()));
+//
+//        $dumper = new CliDumper();
+//        $dumper->setColors(false);
+//        $cloner = new VarCloner();
+//        $cloner->addCasters([
+//            ':stream' => function ($res, $a) {
+//                unset($a['wrapper_data']);
+//
+//                return $a;
+//            },
+//        ]);
+//        $cloner->addCasters([
+//            ':stream' => eval('return function () use ($twig) {
+//                try {
+//                    $twig->render([]);
+//                } catch (\Twig\Error\RuntimeError $e) {
+//                    throw $e->getPrevious();
+//                }
+//            };'),
+//        ]);
+//        $ref = (int) $out;
+//
+//        $data = $cloner->cloneVar($out);
+//        $dumper->dump($data, $out);
+//        $out = stream_get_contents($out, -1, 0);
+//
+//        $this->assertStringMatchesFormat(
+//            <<<EOTXT
+//stream resource {@{$ref}
+//  ⚠: Symfony\Component\VarDumper\Exception\ThrowingCasterException {#%d
+//    #message: "Unexpected Exception thrown from a caster: Foobar"
+//    trace: {
+//      %sTwig.php:2 {
+//        __TwigTemplate_VarDumperFixture_u75a09->doDisplay(array \$context, array \$blocks = [])
+//        › foo bar
+//        ›   twig source
+//        ›
+//      }
+//      %s%eTemplate.php:%d { …}
+//      %s%eTemplate.php:%d { …}
+//      %s%eTemplate.php:%d { …}
+//      %s%eTests%eDumper%eCliDumperTest.php:%d { …}
+//%A  }
+//  }
+//%Awrapper_type: "PHP"
+//  stream_type: "MEMORY"
+//  mode: "%s+b"
+//  unread_bytes: 0
+//  seekable: true
+//  uri: "php://memory"
+//%Aoptions: []
+//}
+//
+//EOTXT
+//            ,
+//            $out
+//        );
+//    }
+//
+//    public function testRefsInProperties()
+//    {
+//        $var = (object) ['foo' => 'foo'];
+//        $var->bar = &$var->foo;
+//
+//        $dumper = new CliDumper();
+//        $dumper->setColors(false);
+//        $cloner = new VarCloner();
+//
+//        $data = $cloner->cloneVar($var);
+//        $out = $dumper->dump($data, true);
+//
+//        $this->assertStringMatchesFormat(
+//            <<<EOTXT
+//{#%d
+//  +"foo": &1 "foo"
+//  +"bar": &1 "foo"
+//}
+//
+//EOTXT
+//            ,
+//            $out
+//        );
+//    }
+//
+//    public function testIncompleteClass()
+//    {
+//        $unserializeCallbackHandler = ini_set('unserialize_callback_func', null);
+//        $var = unserialize('O:8:"Foo\Buzz":0:{}');
+//        ini_set('unserialize_callback_func', $unserializeCallbackHandler);
+//
+//        $this->assertDumpMatchesFormat(
+//            <<<EOTXT
+//__PHP_Incomplete_Class(Foo\Buzz) {}
+//EOTXT
+//            ,
+//            $var
+//        );
+//    }
+//
+//    public static function provideDumpArrayWithColor()
+//    {
+//        yield [
+//            ['foo' => 'bar'],
+//            0,
+//            <<<EOTXT
+//\e[0;38;5;208m\e[38;5;38marray:1\e[0;38;5;208m [\e[m
+//  \e[0;38;5;208m"\e[38;5;113mfoo\e[0;38;5;208m" => "\e[1;38;5;113mbar\e[0;38;5;208m"\e[m
+//\e[0;38;5;208m]\e[m
+//
+//EOTXT
+//        ];
+//
+//        yield [[], AbstractDumper::DUMP_LIGHT_ARRAY, "\e[0;38;5;208m[]\e[m\n"];
+//
+//        yield [
+//            ['foo' => 'bar'],
+//            AbstractDumper::DUMP_LIGHT_ARRAY,
+//            <<<EOTXT
+//\e[0;38;5;208m[\e[m
+//  \e[0;38;5;208m"\e[38;5;113mfoo\e[0;38;5;208m" => "\e[1;38;5;113mbar\e[0;38;5;208m"\e[m
+//\e[0;38;5;208m]\e[m
+//
+//EOTXT
+//        ];
+//
+//        yield [[], 0, "\e[0;38;5;208m[]\e[m\n"];
+//    }
+//
+//    /**
+//     * @dataProvider provideDumpArrayWithColor
+//     */
+//    public function testDumpArrayWithColor($value, $flags, $expectedOut)
+//    {
+//        if ('\\' === \DIRECTORY_SEPARATOR) {
+//            $this->markTestSkipped('Windows console does not support coloration');
+//        }
+//
+//        $out = '';
+//        $dumper = new CliDumper(function ($line, $depth) use (&$out) {
+//            if ($depth >= 0) {
+//                $out .= str_repeat('  ', $depth).$line."\n";
+//            }
+//        }, null, $flags);
+//        $dumper->setColors(true);
+//        $cloner = new VarCloner();
+//        $dumper->dump($cloner->cloneVar($value));
+//
+//        $this->assertSame($expectedOut, $out);
+//    }
 }

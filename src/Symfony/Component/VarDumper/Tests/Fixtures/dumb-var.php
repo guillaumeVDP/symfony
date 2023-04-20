@@ -16,6 +16,7 @@ if (!class_exists(\Symfony\Component\VarDumper\Tests\Fixture\DumbFoo::class)) {
     class DumbFoo
     {
         public $foo = 'foo';
+        public bool $baz;
     }
 }
 
