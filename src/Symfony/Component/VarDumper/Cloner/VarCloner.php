@@ -247,6 +247,7 @@ class VarCloner extends AbstractCloner
         foreach ($values as $h => $v) {
             $hardRefs[$h] = $v;
         }
+
         return $queue;
     }
 }
