@@ -12,6 +12,8 @@
 namespace Symfony\Component\Form\Extension\Core\Type;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class BirthdayType extends AbstractType
@@ -34,5 +36,18 @@ class BirthdayType extends AbstractType
     public function getBlockPrefix(): string
     {
         return 'birthday';
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        parent::buildView($view, $form, $options);
+        $currentMonth = date('m');
+        $currentDay = date('d');
+        if (!isset($view->vars['attr']['min'])) {
+            $view->vars['attr']['min'] = sprintf('%d-%s-%s', reset($options['years']), $currentMonth, $currentDay);
+        }
+        if (!isset($view->vars['attr']['max'])) {
+            $view->vars['attr']['max'] = sprintf('%d-%s-%s', end($options['years']), $currentMonth, $currentDay);
+        }
     }
 }
