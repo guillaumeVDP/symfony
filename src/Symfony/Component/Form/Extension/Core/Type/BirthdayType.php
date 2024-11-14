@@ -40,14 +40,9 @@ class BirthdayType extends AbstractType
 
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
-        parent::buildView($view, $form, $options);
         $currentMonth = date('m');
         $currentDay = date('d');
-        if (!isset($view->vars['attr']['min'])) {
-            $view->vars['attr']['min'] = sprintf('%d-%s-%s', reset($options['years']), $currentMonth, $currentDay);
-        }
-        if (!isset($view->vars['attr']['max'])) {
-            $view->vars['attr']['max'] = sprintf('%d-%s-%s', end($options['years']), $currentMonth, $currentDay);
-        }
+        $view->vars['attr']['min'] ??= sprintf('%d-%s-%s', reset($options['years']), $currentMonth, $currentDay);
+        $view->vars['attr']['max'] ??= sprintf('%d-%s-%s', end($options['years']), $currentMonth, $currentDay);
     }
 }

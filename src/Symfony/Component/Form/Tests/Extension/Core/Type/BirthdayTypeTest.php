@@ -21,7 +21,7 @@ class BirthdayTypeTest extends DateTypeTest
 {
     public const TESTED_TYPE = BirthdayType::class;
 
-    public function testSetInvalidYearsOption(): void
+    public function testSetInvalidYearsOption()
     {
         $this->expectException(InvalidOptionsException::class);
         $this->factory->create(static::TESTED_TYPE, null, [
@@ -30,7 +30,7 @@ class BirthdayTypeTest extends DateTypeTest
         ]);
     }
 
-    public function testWidgetSingleTextHasDefaultAttrMinMax(): void
+    public function testWidgetSingleTextHasDefaultAttrMinMax()
     {
         $currentMonth = date('m');
         $currentDay = date('d');
@@ -45,7 +45,7 @@ class BirthdayTypeTest extends DateTypeTest
         $this->assertEquals($expectedMax, $formView->vars['attr']['max']);
     }
 
-    public function testWidgetSingleTextDoesntRemoveUserAttr(): void
+    public function testWidgetSingleTextDoesntRemoveUserAttr()
     {
         $expectedMin = date('Y-m-d', strtotime('10 years ago'));
         $expectedMax = date('Y-m-d', strtotime('1 years ago'));
