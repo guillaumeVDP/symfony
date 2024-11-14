@@ -21,12 +21,43 @@ class BirthdayTypeTest extends DateTypeTest
 {
     public const TESTED_TYPE = BirthdayType::class;
 
-    public function testSetInvalidYearsOption()
+    public function testSetInvalidYearsOption(): void
     {
         $this->expectException(InvalidOptionsException::class);
         $this->factory->create(static::TESTED_TYPE, null, [
             'years' => 'bad value',
             'widget' => 'choice',
         ]);
+    }
+
+    public function testWidgetSingleTextHasDefaultAttrMinMax(): void
+    {
+        $currentMonth = date('m');
+        $currentDay = date('d');
+        $form = $this->factory->create(static::TESTED_TYPE, null, [
+            'widget' => 'single_text',
+        ]);
+        $formView = $form->createView();
+        $options = $form->getConfig()->getOptions();
+        $expectedMin = sprintf('%d-%s-%s', reset($options['years']), $currentMonth, $currentDay);
+        $expectedMax = sprintf('%d-%s-%s', end($options['years']), $currentMonth, $currentDay);
+        $this->assertEquals($expectedMin, $formView->vars['attr']['min']);
+        $this->assertEquals($expectedMax, $formView->vars['attr']['max']);
+    }
+
+    public function testWidgetSingleTextDoesntRemoveUserAttr(): void
+    {
+        $expectedMin = date('Y-m-d', strtotime('10 years ago'));
+        $expectedMax = date('Y-m-d', strtotime('1 years ago'));
+        $form = $this->factory->create(static::TESTED_TYPE, null, [
+            'widget' => 'single_text',
+            'attr' => [
+                'min' => $expectedMin,
+                'max' => $expectedMax
+            ]
+        ]);
+        $formView = $form->createView();
+        $this->assertEquals($expectedMin, $formView->vars['attr']['min']);
+        $this->assertEquals($expectedMax, $formView->vars['attr']['max']);
     }
 }
