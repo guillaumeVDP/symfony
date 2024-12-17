@@ -18,7 +18,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\UriSafeTokenGenerator;
 use Symfony\Component\Security\Csrf\TokenStorage\SessionTokenStorage;
-use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
+use Symfony\Component\Security\Csrf\TokenStorage\CsrfTokenStorageInterface;
 
 return static function (ContainerConfigurator $container) {
     $container->services()
@@ -29,7 +29,7 @@ return static function (ContainerConfigurator $container) {
         ->set('security.csrf.token_storage', SessionTokenStorage::class)
             ->args([service('request_stack')])
 
-        ->alias(TokenStorageInterface::class, 'security.csrf.token_storage')
+        ->alias(CsrfTokenStorageInterface::class, 'security.csrf.token_storage')
 
         ->set('security.csrf.token_manager', CsrfTokenManager::class)
             ->args([

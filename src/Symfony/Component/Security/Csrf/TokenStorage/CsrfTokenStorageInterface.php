@@ -16,7 +16,7 @@ namespace Symfony\Component\Security\Csrf\TokenStorage;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-interface TokenStorageInterface
+interface CsrfTokenStorageInterface
 {
     /**
      * Reads a stored CSRF token.

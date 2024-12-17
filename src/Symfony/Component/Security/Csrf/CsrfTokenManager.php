@@ -16,7 +16,7 @@ use Symfony\Component\Security\Core\Exception\InvalidArgumentException;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\UriSafeTokenGenerator;
 use Symfony\Component\Security\Csrf\TokenStorage\NativeSessionTokenStorage;
-use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
+use Symfony\Component\Security\Csrf\TokenStorage\CsrfTokenStorageInterface;
 
 /**
  * Default implementation of {@link CsrfTokenManagerInterface}.
@@ -27,7 +27,7 @@ use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
 class CsrfTokenManager implements CsrfTokenManagerInterface
 {
     private TokenGeneratorInterface $generator;
-    private TokenStorageInterface $storage;
+    private CsrfTokenStorageInterface $storage;
     private \Closure|string $namespace;
 
     /**
@@ -37,7 +37,7 @@ class CsrfTokenManager implements CsrfTokenManagerInterface
      *                   * RequestStack: generates a namespace using the current main request
      *                   * callable: uses the result of this callable (must return a string)
      */
-    public function __construct(?TokenGeneratorInterface $generator = null, ?TokenStorageInterface $storage = null, string|RequestStack|callable|null $namespace = null)
+    public function __construct(?TokenGeneratorInterface $generator = null, ?CsrfTokenStorageInterface $storage = null, string|RequestStack|callable|null $namespace = null)
     {
         $this->generator = $generator ?? new UriSafeTokenGenerator();
         $this->storage = $storage ?? new NativeSessionTokenStorage();

@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManager;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
-use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
+use Symfony\Component\Security\Csrf\TokenStorage\CsrfTokenStorageInterface;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
@@ -474,7 +474,7 @@ class CsrfTokenManagerTest extends TestCase
     {
         $generator = $this->createMock(TokenGeneratorInterface::class);
         $generator->expects($this->once())->method('generateToken')->willReturn('random');
-        $storage = $this->createMock(TokenStorageInterface::class);
+        $storage = $this->createMock(CsrfTokenStorageInterface::class);
 
         $requestStack = new RequestStack();
         $requestStack->push(new Request([], [], [], [], [], ['HTTPS' => 'on']));
@@ -535,7 +535,7 @@ class CsrfTokenManagerTest extends TestCase
     {
         return [
             $this->createMock(TokenGeneratorInterface::class),
-            $this->createMock(TokenStorageInterface::class),
+            $this->createMock(CsrfTokenStorageInterface::class),
         ];
     }
 
