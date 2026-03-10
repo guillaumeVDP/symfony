@@ -25,11 +25,17 @@ class SweegoRequestParserTest extends AbstractRequestParserTestCase
 
     protected function createRequest(string $payload): Request
     {
+        $webhookId = 'a5ccc627-6e43-4012-bb29-f1bfe3a3d13e';
+        $webhookTimestamp = '1725290740';
+
+        $contentToSign = \sprintf('%s.%s.%s', $webhookId, $webhookTimestamp, $payload);
+        $signature = base64_encode(hash_hmac('sha256', $contentToSign, base64_decode($this->getSecret()), true));
+
         return Request::create('/', 'POST', [], [], [], [
             'Content-Type' => 'application/json',
-            'HTTP_webhook-id' => 'a5ccc627-6e43-4012-bb29-f1bfe3a3d13e',
-            'HTTP_webhook-timestamp' => '1725290740',
-            'HTTP_webhook-signature' => 'k7SwzHXZqVKNvCpp6HwGS/5aDZ6NraYnKmVkBdx7MHE=',
+            'HTTP_webhook-id' => $webhookId,
+            'HTTP_webhook-timestamp' => $webhookTimestamp,
+            'HTTP_webhook-signature' => $signature,
         ], $payload);
     }
 }

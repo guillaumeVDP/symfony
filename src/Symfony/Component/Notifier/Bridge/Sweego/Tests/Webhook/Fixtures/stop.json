@@ -1,0 +1,15 @@
+{
+  "event_type": "sms_stop",
+  "timestamp": "2024-09-02T17:25:43",
+  "swg_uid": "03-f237cd16-a013-4e35-a279-c9eaa994e82b",
+  "event_id": "c7eee849-8g65-6234-dd4b-h3dhf5f35g4g",
+  "channel": "sms",
+  "client_id": "de1bbe6f-4103-47b1-8f69-94856aaba3fc",
+  "country_code": "FR",
+  "phone_number": "0033612345678",
+  "sender_id": "38082",
+  "sms_type": "transactional",
+  "campaign_id": null,
+  "test_mode": false,
+  "send_date": "2024-09-02T15:25:40.577165"
+}

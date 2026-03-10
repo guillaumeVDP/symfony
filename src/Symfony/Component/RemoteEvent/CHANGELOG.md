@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+8.1
+---
+
+ * Add `SmsEvent::CLICK` and `SmsEvent::UNSUBSCRIBE` constants for SMS webhook events
+
 6.4
 ---
 

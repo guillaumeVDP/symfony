@@ -1,0 +1,16 @@
+{
+  "event_type": "sms_clicked",
+  "timestamp": "2024-09-02T17:25:43",
+  "swg_uid": "03-f237cd16-a013-4e35-a279-c9eaa994e82b",
+  "event_id": "b6ddd738-7f54-5123-cc3a-g2cge4e24f3f",
+  "channel": "sms",
+  "client_id": "de1bbe6f-4103-47b1-8f69-94856aaba3fc",
+  "country_code": "FR",
+  "phone_number": "0033612345678",
+  "sender_id": "38082",
+  "sms_type": "transactional",
+  "campaign_id": null,
+  "test_mode": false,
+  "send_date": "2024-09-02T15:25:40.577165",
+  "url": "https://symfony.com/"
+}
